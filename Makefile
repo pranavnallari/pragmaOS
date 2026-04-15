@@ -1,5 +1,5 @@
 CC = x86_64-elf-gcc
-CFLAGS = -ffreestanding -nostdlib -mno-red-zone -Wall -Wextra -I kernel/include -Wl,-z,max-page-size=0x1000
+CFLAGS = -ffreestanding -nostdlib -mcmodel=kernel -mno-red-zone -Wall -Wextra -I kernel/include -Wl,-z,max-page-size=0x1000
 
 KERNEL_SRC = kernel/src/kernel.c
 FONT_SRC = kernel/src/font.psf
@@ -21,7 +21,7 @@ $(KERNEL_OBJ): $(KERNEL_SRC)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(FONT_OBJ): $(FONT_SRC)
-	objcopy -O elf64-x86-64 -B i386 -I binary $< $@
+	objcopy -O elf64-x86-64 -I binary $< $@
 
 $(KERNEL_ELF): $(KERNEL_OBJ) $(FONT_OBJ)
 	$(CC) $(CFLAGS) -T linker.ld -o $@ $^
