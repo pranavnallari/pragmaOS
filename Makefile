@@ -2,9 +2,13 @@ CC = x86_64-elf-gcc
 CFLAGS = -ffreestanding -nostdlib -mcmodel=kernel -mno-red-zone -Wall -Wextra -I kernel/include -Wl,-z,max-page-size=0x1000
 
 KERNEL_SRC = kernel/src/kernel.c
-FONT_SRC = kernel/src/font.psf
+FONT8_SRC = kernel/src/font8.psf
+FONT16_SRC = kernel/src/font16.psf
+FONT32_SRC = kernel/src/font32.psf
 
-FONT_OBJ = font.o
+FONT8_OBJ = font8.o
+FONT16_OBJ = font16.o
+FONT32_OBJ = font32.o
 KERNEL_OBJ = kernel.o
 
 KERNEL_ELF = kernel.elf
@@ -20,10 +24,16 @@ all: $(ISO)
 $(KERNEL_OBJ): $(KERNEL_SRC)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(FONT_OBJ): $(FONT_SRC)
+$(FONT8_OBJ): $(FONT8_SRC)
 	objcopy -O elf64-x86-64 -I binary $< $@
 
-$(KERNEL_ELF): $(KERNEL_OBJ) $(FONT_OBJ)
+$(FONT16_OBJ): $(FONT16_SRC)
+	objcopy -O elf64-x86-64 -I binary $< $@
+
+$(FONT32_OBJ): $(FONT32_SRC)
+	objcopy -O elf64-x86-64 -I binary $< $@
+
+$(KERNEL_ELF): $(KERNEL_OBJ) $(FONT8_OBJ) $(FONT16_OBJ) $(FONT32_OBJ)
 	$(CC) $(CFLAGS) -T linker.ld -o $@ $^
 
 $(ISO): $(KERNEL_ELF)
@@ -56,4 +66,4 @@ run: $(ISO)
 		-m 256M
 
 clean:
-	rm -rf $(KERNEL_ELF) $(ISO) $(ISO_ROOT)
+	rm -rf $(KERNEL_ELF) $(ISO) $(ISO_ROOT) *.o
