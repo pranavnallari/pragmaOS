@@ -12,6 +12,7 @@ PHDRS
 SECTIONS
 {
     . = 0xffffffff80000000;
+    _kernel_start = .;
 
     .limine_requests : {
         KEEP(*(.limine_requests_start))
@@ -50,4 +51,5 @@ SECTIONS
         *(.eh_frame*)
         *(.note .note.*)
     }
+    _kernel_end = .;
 }

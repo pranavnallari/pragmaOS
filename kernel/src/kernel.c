@@ -4,6 +4,7 @@
 #include<stddef.h>
 #include<limine.h>
 #include<pmm.h>
+#include<vmm.h>
 #include<terminal.h>
 #include<stdbool.h>
 
@@ -30,6 +31,12 @@ static volatile struct limine_framebuffer_request framebuffer_request = {
 __attribute__((used, section(".limine_requests")))
 static volatile struct limine_hhdm_request hhdm_request = {
     .id = LIMINE_HHDM_REQUEST_ID,
+    .revision = 0
+};
+
+__attribute__((used, section(".limine_requests")))
+static volatile struct limine_executable_address_request executable_address_request = {
+    .id = LIMINE_EXECUTABLE_ADDRESS_REQUEST_ID,
     .revision = 0
 };
 
@@ -78,7 +85,6 @@ void kmain(void) {
     if (terminal_init(&term, framebuffer, header16, 0, 0, 0x00FF0000, 0x00000000) < 0) hcf();
 
 
-    // pmm wiring code
     struct limine_memmap_response *memmap_resp = memmap_request.response;
     if (memmap_resp == NULL) hcf();
 
@@ -92,29 +98,19 @@ void kmain(void) {
     }
     terminal_print(&term, "PMM Init successfull\n");
 
-    void *p1 = pmm_alloc();
-    if (p1 == NULL) {
-        terminal_print(&term, "P1 failed to allocate\n");
+    if (executable_address_request.response == NULL) {
         hcf();
     }
-    void *p2 = pmm_alloc();
-    if (p2 == NULL) {
-        terminal_print(&term, "P2 failed to allocate\n");
-        hcf();
-    }
-    void *p3 = pmm_alloc();
-    if (p3 == NULL) {
-        terminal_print(&term, "P3 failed to allocate\n");
-        hcf();
-    }
-    
+    terminal_print(&term, "executable address request recieved successfully\n");
 
-    terminal_print(&term, "P1 : ");
-    terminal_print_hex(&term, (uint64_t)p1);
-    terminal_print(&term, "\nP2 : ");
-    terminal_print_hex(&term, (uint64_t)p2);
-    terminal_print(&term, "\nP3 : ");
-    terminal_print_hex(&term, (uint64_t)p3);
+
+    uint64_t *pml4_table =  vmm_init(memmap_resp, executable_address_request.response, hhdm_offset);
+    if (!pml4_table) {
+        hcf();
+    }
+
+    terminal_print(&term, "vmm_init successfull. PML4 addr : ");
+    terminal_print_hex(&term, (uint64_t)pml4_table);
 
     hcf();
 }
