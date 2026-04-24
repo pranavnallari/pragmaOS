@@ -2,11 +2,16 @@
 
 #include<stdint.h>
 #include<stddef.h>
+#include<stdbool.h>
+
 #include<limine.h>
+
+#include<terminal.h>
 #include<pmm.h>
 #include<vmm.h>
-#include<terminal.h>
-#include<stdbool.h>
+#include<gdt.h>
+#include<idt.h>
+
 
 
 extern uint8_t _binary_kernel_src_font8_psf_start;
@@ -108,9 +113,14 @@ void kmain(void) {
     if (!pml4_table) {
         hcf();
     }
-
-    terminal_print(&term, "vmm_init successfull. PML4 addr : ");
+    
+    gdt_init();
+    idt_init();
+    
+    terminal_print(&term, "vmm_init + gdt init + idt init successfull. PML4 addr : ");
     terminal_print_hex(&term, (uint64_t)pml4_table);
+
+    
 
     hcf();
 }

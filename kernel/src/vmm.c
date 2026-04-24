@@ -1,7 +1,7 @@
 // vmm.c
 
-#include "vmm.h"
-#include "pmm.h"
+#include <vmm.h>
+#include <pmm.h>
 
 static uint64_t hhdm_offset;
 
