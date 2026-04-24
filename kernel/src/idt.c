@@ -2,11 +2,43 @@
 
 #include<idt.h>
 #include<isr.h>
+#include<pic.h>
+#include<io.h>
+#include<terminal.h>
 
 #define SET_ISR(n) idt_set_entry(n, isr##n, 0x8E)
 
 S_IDT_ENTRY idt[256];
 
+static const char *exception_messages[] = {
+    "Division By Zero",
+    "Debug",
+    "Non Maskable Interrupt",
+    "Breakpoint",
+    "Overflow",
+    "Bound Range Exceeded",
+    "Invalid Opcode",
+    "Device Not Available",
+    "Double Fault",
+    "Coprocessor Segment Overrun",
+    "Invalid TSS",
+    "Segment Not Present",
+    "Stack Segment Fault",
+    "General Protection Fault",
+    "Page Fault",
+    "Reserved",
+    "x87 Floating Point",
+    "Alignment Check",
+    "Machine Check",
+    "SIMD Floating Point",
+    "Virtualization",
+    "Control Protection",
+    "Reserved", "Reserved", "Reserved", "Reserved", "Reserved", "Reserved",
+    "Hypervisor Injection",
+    "VMM Communication",
+    "Security Exception",
+    "Reserved"
+};
 
 void idt_set_entry(uint8_t vector, void *handler, uint8_t type_attr) {
     uint64_t addr = (uint64_t)handler;
@@ -20,7 +52,19 @@ void idt_set_entry(uint8_t vector, void *handler, uint8_t type_attr) {
 }
 
 void isr_handler(uint64_t vector) {
-    (void)vector;
+    if (vector == 32) {
+        pic_send_eoi(0);
+        return;
+    }
+    if (vector == 33) {
+        uint8_t scancode = inb(0x60);
+        keyboard_handle(scancode);
+        pic_send_eoi(1);
+        return;
+    }
+    terminal_print(global_term, "\nEXCEPTION: ");
+    terminal_print(global_term, exception_messages[vector]);
+    terminal_print(global_term, "\n");
     for(;;) __asm__ volatile("hlt");
 }
 
@@ -33,6 +77,7 @@ void idt_init(void) {
     SET_ISR(20); SET_ISR(21); SET_ISR(22); SET_ISR(23);
     SET_ISR(24); SET_ISR(25); SET_ISR(26); SET_ISR(27);
     SET_ISR(28); SET_ISR(29); SET_ISR(30); SET_ISR(31);
+    SET_ISR(32); SET_ISR(33);
 
     S_IDTR idtr = {
     .size = sizeof(idt) - 1,

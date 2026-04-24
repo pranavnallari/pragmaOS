@@ -37,4 +37,7 @@ void isr29();
 void isr30();
 void isr31();
 
+void isr32();
+void isr33();
+
 #endif

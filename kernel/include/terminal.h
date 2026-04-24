@@ -7,7 +7,6 @@
 #include<limine.h>
 #include<stdbool.h>
 
-
 typedef struct {
     uint32_t magic;
     uint32_t version;
@@ -35,6 +34,8 @@ typedef struct {
     size_t start_x;
     uint8_t *glyphs;
 } S_TERMINAL_STATE;
+
+extern S_TERMINAL_STATE *global_term;
 
 
 int terminal_init(S_TERMINAL_STATE *term_state, struct limine_framebuffer *fb, S_PSF2_HEADER *header, size_t x, size_t y, uint32_t fg, uint32_t bg);

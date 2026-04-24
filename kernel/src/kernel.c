@@ -11,8 +11,9 @@
 #include<vmm.h>
 #include<gdt.h>
 #include<idt.h>
-
-
+#include<pic.h>
+#include<pit.h>
+#include<io.h>
 
 extern uint8_t _binary_kernel_src_font8_psf_start;
 extern uint8_t _binary_kernel_src_font8_psf_end;
@@ -88,6 +89,7 @@ void kmain(void) {
 
     S_TERMINAL_STATE term;
     if (terminal_init(&term, framebuffer, header16, 0, 0, 0x00FF0000, 0x00000000) < 0) hcf();
+    global_term = &term;
 
 
     struct limine_memmap_response *memmap_resp = memmap_request.response;
@@ -116,8 +118,14 @@ void kmain(void) {
     
     gdt_init();
     idt_init();
-    
-    terminal_print(&term, "vmm_init + gdt init + idt init successfull. PML4 addr : ");
+    pic_init();
+    pit_init();
+    while (inb(0x64) & 1) {
+        inb(0x60);
+    }
+    __asm__ volatile("sti");
+
+    terminal_print(&term, "vmm_init + gdt init + idt init + pic_init + pit_init successfull. PML4 addr : ");
     terminal_print_hex(&term, (uint64_t)pml4_table);
 
     

@@ -2,6 +2,9 @@
 
 #include <terminal.h>
 
+
+S_TERMINAL_STATE *global_term = NULL;
+
 static inline void set_pixel(struct limine_framebuffer *fb, uint32_t *fb_ptr, size_t x, size_t y, uint32_t val) {
     fb_ptr[y * (fb->pitch / 4) + x] = val;
 }

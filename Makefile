@@ -11,6 +11,9 @@ VMM_SRC = kernel/src/vmm.c
 GDT_SRC = kernel/src/gdt.c
 IDT_SRC = kernel/src/idt.c
 ISR_SRC = kernel/src/isr.asm
+PIC_SRC = kernel/src/pic.c
+PIT_SRC = kernel/src/pit.c
+KEYBOARD_SRC = kernel/src/keyboard.c
 
 
 FONT8_SRC = kernel/src/font8.psf
@@ -30,6 +33,9 @@ VMM_OBJ = vmm.o
 GDT_OBJ = gdt.o
 IDT_OBJ = idt.o
 ISR_OBJ = isr.o
+PIC_OBJ = pic.o
+PIT_OBJ = pit.o
+KEYBOARD_OBJ = keyboard.o
 
 
 KERNEL_ELF = kernel.elf
@@ -53,7 +59,12 @@ $(IDT_OBJ): $(IDT_SRC)
 	$(CC) $(CFLAGS) -c -o $@ $<
 $(ISR_OBJ): $(ISR_SRC)
 	$(ASM) $(ASMFLAGS) -o $@ $<
-
+$(PIC_OBJ): $(PIC_SRC)
+	$(CC) $(CFLAGS) -c -o $@ $<
+$(PIT_OBJ): $(PIT_SRC)
+	$(CC) $(CFLAGS) -c -o $@ $<
+$(KEYBOARD_OBJ): $(KEYBOARD_SRC)
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(FONT8_OBJ): $(FONT8_SRC)
 	objcopy -O elf64-x86-64 -I binary $< $@
@@ -62,7 +73,7 @@ $(FONT16_OBJ): $(FONT16_SRC)
 $(FONT32_OBJ): $(FONT32_SRC)
 	objcopy -O elf64-x86-64 -I binary $< $@
 
-$(KERNEL_ELF): $(KERNEL_OBJ) $(TERMINAL_OBJ) $(PMM_OBJ) $(VMM_OBJ) $(GDT_OBJ) $(IDT_OBJ) $(ISR_OBJ) $(FONT8_OBJ) $(FONT16_OBJ) $(FONT32_OBJ)
+$(KERNEL_ELF): $(KERNEL_OBJ) $(TERMINAL_OBJ) $(PMM_OBJ) $(VMM_OBJ) $(GDT_OBJ) $(IDT_OBJ) $(ISR_OBJ) $(PIC_OBJ) $(PIT_OBJ) $(KEYBOARD_OBJ) $(FONT8_OBJ) $(FONT16_OBJ) $(FONT32_OBJ)
 	$(CC) $(CFLAGS) -T linker.ld -o $@ $^
 $(ISO): $(KERNEL_ELF)
 	rm -rf $(ISO_ROOT)
@@ -85,8 +96,9 @@ $(ISO): $(KERNEL_ELF)
 	$(LIMINE_DIR)/limine bios-install $(ISO)
 run: $(ISO)
 	qemu-system-x86_64 \
-	    -bios /usr/share/ovmf/OVMF.fd \
-	    -cdrom $(ISO) \
-	    -m 256M
+        -machine q35 \
+        -bios /usr/share/ovmf/OVMF.fd \
+        -cdrom $(ISO) \
+        -m 256M
 clean:
 	rm -rf $(KERNEL_ELF) $(ISO) $(ISO_ROOT) *.o
