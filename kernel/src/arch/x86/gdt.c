@@ -1,6 +1,6 @@
 // gdt.c
 
-#include <gdt.h>
+#include <arch/x86/gdt.h>
 
 static uint64_t gdt[5];
 

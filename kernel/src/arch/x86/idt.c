@@ -1,10 +1,10 @@
 // idt.c
 
-#include<idt.h>
-#include<isr.h>
-#include<pic.h>
-#include<io.h>
-#include<terminal.h>
+#include <arch/x86/idt.h>
+#include <arch/x86/isr.h>
+#include <arch/x86/pic.h>
+#include <arch/x86/io.h>
+#include <drivers/terminal.h>
 
 #define SET_ISR(n) idt_set_entry(n, isr##n, 0x8E)
 

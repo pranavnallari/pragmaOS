@@ -1,6 +1,6 @@
 // terminal.c
 
-#include <terminal.h>
+#include <drivers/terminal.h>
 
 
 S_TERMINAL_STATE *global_term = NULL;

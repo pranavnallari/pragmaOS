@@ -1,7 +1,7 @@
 // pit.c
 
-#include<pit.h>
-#include<io.h>
+#include <arch/x86/pit.h>
+#include <arch/x86/io.h>
 #include<stdint.h>
 
 

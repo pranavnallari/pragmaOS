@@ -4,25 +4,24 @@
 #include<stddef.h>
 #include<stdbool.h>
 
-#include<limine.h>
+#include <limine.h>
 
-#include<terminal.h>
-#include<pmm.h>
-#include<vmm.h>
-#include<gdt.h>
-#include<idt.h>
-#include<pic.h>
-#include<pit.h>
-#include<io.h>
+#include <arch/x86/gdt.h>
+#include <arch/x86/idt.h>
+#include <arch/x86/pic.h>
+#include <arch/x86/pit.h>
+#include <arch/x86/io.h>
+#include <mm/pmm.h>
+#include <mm/vmm.h>
+#include <drivers/terminal.h>
 
-extern uint8_t _binary_kernel_src_font8_psf_start;
-extern uint8_t _binary_kernel_src_font8_psf_end;
+extern uint8_t _binary_kernel_src_fonts_font8_psf_start;
+extern uint8_t _binary_kernel_src_fonts_font16_psf_start;
+extern uint8_t _binary_kernel_src_fonts_font32_psf_start;
 
-extern uint8_t _binary_kernel_src_font16_psf_start;
-extern uint8_t _binary_kernel_src_font16_psf_end;
-
-extern uint8_t _binary_kernel_src_font32_psf_start;
-extern uint8_t _binary_kernel_src_font32_psf_end;
+extern uint8_t _binary_kernel_src_fonts_font8_psf_end;
+extern uint8_t _binary_kernel_src_fonts_font16_psf_end;
+extern uint8_t _binary_kernel_src_fonts_font32_psf_end;
 
 
 __attribute__((used, section(".limine_requests")))
@@ -77,9 +76,9 @@ void kmain(void) {
     for (size_t i = 0; i < (framebuffer->pitch / 4) * framebuffer->height; i++)
         fb_ptr[i] = 0x00000000;
     
-    uint8_t* font8_ptr = &_binary_kernel_src_font8_psf_start;
-    uint8_t* font16_ptr = &_binary_kernel_src_font16_psf_start;
-    uint8_t* font32_ptr = &_binary_kernel_src_font32_psf_start;
+    uint8_t* font8_ptr = &_binary_kernel_src_fonts_font8_psf_start;
+    uint8_t* font16_ptr = &_binary_kernel_src_fonts_font16_psf_start;
+    uint8_t* font32_ptr = &_binary_kernel_src_fonts_font32_psf_start;
 
     S_PSF2_HEADER *header8 = (S_PSF2_HEADER *)font8_ptr;  
     S_PSF2_HEADER *header16 = (S_PSF2_HEADER *)font16_ptr;
