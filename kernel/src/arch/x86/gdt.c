@@ -2,7 +2,7 @@
 
 #include <arch/x86/gdt.h>
 
-static uint64_t gdt[5];
+uint64_t gdt[7];
 
 void gdt_init(void) {
     gdt[0] = 0x0000000000000000;
@@ -34,6 +34,8 @@ void gdt_init(void) {
     "mov %%ax, %%ds\n"
     "mov %%ax, %%es\n"
     "mov %%ax, %%ss\n"
+    "mov %%ax, %%fs\n"
+    "mov %%ax, %%gs\n"
     ::: "ax", "memory"
-    );
+);
 }

@@ -11,6 +11,8 @@
 #include <arch/x86/pic.h>
 #include <arch/x86/pit.h>
 #include <arch/x86/io.h>
+#include <arch/x86/tss.h>
+#include <arch/x86/syscall.h>
 #include <mm/pmm.h>
 #include <mm/vmm.h>
 #include <drivers/terminal.h>
@@ -116,6 +118,8 @@ void kmain(void) {
     }
     
     gdt_init();
+    tss_init();
+    syscall_init();
     idt_init();
     pic_init();
     pit_init();
@@ -123,8 +127,7 @@ void kmain(void) {
         inb(0x60);
     }
     __asm__ volatile("sti");
-
-    terminal_print(&term, "vmm_init + gdt init + idt init + pic_init + pit_init successfull. PML4 addr : ");
+    terminal_print(&term, "Great Success!!. PML4 addr : ");
     terminal_print_hex(&term, (uint64_t)pml4_table);
 
     

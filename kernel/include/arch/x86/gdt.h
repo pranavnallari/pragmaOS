@@ -8,5 +8,5 @@ typedef struct {
 } __attribute__((packed)) S_GDTR;
 
 void gdt_init(void);
-
+extern uint64_t gdt[7];
 #endif

@@ -25,7 +25,8 @@ int pmm_init(struct limine_memmap_response *memmap_resp, uint64_t hhdm_offset) {
     for (uint64_t i = 0; i < memmap_resp->entry_count; i++) {
         struct limine_memmap_entry *entry = memmap_resp->entries[i];
         if (entry->type == LIMINE_MEMMAP_USABLE && entry->length >= bitmap_size) {
-            bitmap = (uint8_t *)(entry->base + hhdm_offset);
+            uint64_t aligned = (entry->base + page_size - 1) & ~(page_size - 1);
+            bitmap = (uint8_t *)(aligned + hhdm_offset);
             break;
         }
     }
@@ -39,6 +40,7 @@ int pmm_init(struct limine_memmap_response *memmap_resp, uint64_t hhdm_offset) {
         if (entry->type == LIMINE_MEMMAP_USABLE) {
             for (uint64_t curr = entry->base; curr < entry->base + entry->length; curr += page_size) {
                 uint64_t page = curr / page_size;
+                if (page >= max_pages) continue;
                 bitmap[page / 8] &= ~(1U << (page % 8));
             }
         }
@@ -73,5 +75,6 @@ void *pmm_alloc(void) {
 
 void pmm_free(void *addr) {
     uint64_t page_index = (uint64_t)addr / page_size;
+    if (page_index >= max_pages) return;
     bitmap[page_index / 8] &= ~(1U << (page_index % 8));
 }

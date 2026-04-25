@@ -5,6 +5,7 @@
 #include <arch/x86/pic.h>
 #include <arch/x86/io.h>
 #include <drivers/terminal.h>
+#include <drivers/keyboard.h>
 
 #define SET_ISR(n) idt_set_entry(n, isr##n, 0x8E)
 
@@ -62,9 +63,17 @@ void isr_handler(uint64_t vector) {
         pic_send_eoi(1);
         return;
     }
-    terminal_print(global_term, "\nEXCEPTION: ");
-    terminal_print(global_term, exception_messages[vector]);
-    terminal_print(global_term, "\n");
+    if (vector < 32) {
+        terminal_print(global_term, "\nEXCEPTION: ");
+        terminal_print(global_term, exception_messages[vector]);
+        terminal_print(global_term, "\n");
+    } else {
+        terminal_print(global_term, "Unknown Interrupt\n");
+    }
+
+    if (vector >= 32 && vector < 48) {
+        pic_send_eoi(vector - 32);
+    }
     for(;;) __asm__ volatile("hlt");
 }
 
