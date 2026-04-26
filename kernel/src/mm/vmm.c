@@ -2,6 +2,7 @@
 
 #include <mm/vmm.h>
 #include <mm/pmm.h>
+#include <lib/mem.h>
 
 static uint64_t hhdm_offset;
 
@@ -21,21 +22,17 @@ static uint64_t *vmm_get_or_create_next_table(uint64_t *table, uint16_t index, u
 
         next_table = (uint64_t *)(phys + hhdm_offset);
 
-        for (uint64_t i = 0; i < 512; i++) {
-            next_table[i] = 0;
-        }
+        next_table = memset(next_table, 0, 512 * sizeof(uint64_t));
         table[index] = phys | (flags & 0x6) | 0x1;
     }
 
     return next_table;
 }
 
-int vmm_map(uint64_t *pml4, uint64_t phys, uint64_t virt, uint64_t flags) {
-
+int vmm_map(uint64_t *pml4, uint64_t phys, uint64_t virt, uint64_t flags) {  
     if ((phys & 0xFFF) || (virt & 0xFFF)) {
         return -1;
     }
-
 
     uint16_t pml4_index = (virt >> 39) & 0x1FF;
     uint16_t pdpt_index = (virt >> 30) & 0x1FF;
@@ -66,9 +63,8 @@ uint64_t *vmm_init(struct limine_memmap_response *memmap_resp, struct limine_exe
     uint64_t *pml4_phys = pmm_alloc();
     uint64_t *pml4_virt = (uint64_t *)((uint64_t)pml4_phys + hhdm_offset);
     uint64_t flags = 0x3;
-    for (uint64_t i = 0; i < 512; i++) {
-            pml4_virt[i] = 0;
-    }
+
+    pml4_virt = memset(pml4_virt, 0, 512 * sizeof(uint64_t));
 
     for (uint64_t i = 0; i < memmap_resp->entry_count; i++) {
         struct limine_memmap_entry *entry = memmap_resp->entries[i];
@@ -90,4 +86,16 @@ uint64_t *vmm_init(struct limine_memmap_response *memmap_resp, struct limine_exe
     __asm__ volatile ("mov %0, %%cr3" :: "r"((uint64_t)pml4_phys) : "memory");
 
     return pml4_virt;
+}
+
+
+uint64_t* vmm_create_user_space(uint64_t *kernel_pml4) {
+    uint64_t* user_pml4_phys = (uint64_t*)pmm_alloc();
+    if (!user_pml4_phys) return NULL;
+    uint64_t* user_pml4 = (uint64_t *)((uint64_t)user_pml4_phys + hhdm_offset);
+    user_pml4 = memset(user_pml4, 0, 512 * sizeof(uint64_t));
+    for (int i = 256; i < 512; i++) {
+        user_pml4[i] = kernel_pml4[i];
+    }
+    return user_pml4;
 }

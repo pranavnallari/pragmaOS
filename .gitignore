@@ -2,3 +2,4 @@
 *.iso
 iso_root/
 limine/
+.vscode/

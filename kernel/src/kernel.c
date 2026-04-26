@@ -16,6 +16,7 @@
 #include <mm/pmm.h>
 #include <mm/vmm.h>
 #include <drivers/terminal.h>
+#include<lib/mem.h>
 
 extern uint8_t _binary_kernel_src_fonts_font8_psf_start;
 extern uint8_t _binary_kernel_src_fonts_font16_psf_start;
@@ -63,6 +64,11 @@ static void hcf(void) {
    
 }
 
+static uint8_t user_program[] = {
+    0x48, 0x31, 0xC0,   // xor rax, rax
+    0x0F, 0x05,         // syscall
+    0xEB, 0xFE
+};
 void kmain(void) {
     if (LIMINE_BASE_REVISION_SUPPORTED(limine_base_revision) == false) {
         hcf();
@@ -112,7 +118,7 @@ void kmain(void) {
     terminal_print(&term, "executable address request recieved successfully\n");
 
 
-    uint64_t *pml4_table =  vmm_init(memmap_resp, executable_address_request.response, hhdm_offset);
+    uint64_t *pml4_table = vmm_init(memmap_resp, executable_address_request.response, hhdm_offset);
     if (!pml4_table) {
         hcf();
     }
@@ -129,8 +135,40 @@ void kmain(void) {
     __asm__ volatile("sti");
     terminal_print(&term, "Great Success!!. PML4 addr : ");
     terminal_print_hex(&term, (uint64_t)pml4_table);
+    terminal_print(&term, "\n");
 
-    
+    uint64_t *user_pml4 = vmm_create_user_space(pml4_table);
+    uint64_t* user_page = pmm_alloc();
+    if (!user_page) hcf();
+    uint64_t *virt_addr = (uint64_t *)((uint64_t)user_page + hhdm_offset);
+    memcpy((void*)(virt_addr), user_program, sizeof(user_program));
+    if (vmm_map(user_pml4, (uint64_t)user_page, 0x400000, 0x7) < 0) hcf();
+    uint64_t* stack_page = pmm_alloc();
+    if (!stack_page) hcf();
 
+    if (vmm_map(user_pml4, (uint64_t)stack_page, 0x500000, 0x7) < 0) hcf();
+    uint64_t user_rsp = 0x500000 + 0x1000;
+    uint64_t user_pml4_phys = (uint64_t)user_pml4 - hhdm_offset;
+
+    __asm__ volatile ("mov %0, %%cr3" :: "r"(user_pml4_phys) : "memory");
+
+    __asm__ volatile (
+        "mov $0x23, %%ax\n"
+        "mov %%ax, %%ds\n"
+        "mov %%ax, %%es\n"
+        "mov %%ax, %%fs\n"
+        "mov %%ax, %%gs\n"
+
+        "pushq $0x23\n"          // SS
+        "pushq %[rsp]\n"         // RSP
+        "pushfq\n"
+        "pushq $0x1B\n"          // CS
+        "pushq $0x400000\n"      // RIP
+
+        "iretq\n"
+        :
+        : [rsp]"r"(user_rsp)
+        : "memory", "ax"
+    );
     hcf();
 }
